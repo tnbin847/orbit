@@ -1,6 +1,6 @@
-#########################################################
-# 스프링 부트 애플리케이션 환경별 프로파일 그룹핑
-#########################################################
+# --------------------------------------------------------------------------
+# 스프링 부트 애플리케이션 환경별 프로파일 그룹화
+# --------------------------------------------------------------------------
 spring:
   profiles:
     active: dev
@@ -8,34 +8,68 @@ spring:
       dev: dev, common
       local: local, common
 
-#########################################################
-# 환경별 프로파일 설정
-#########################################################
 
---- # 개발 환경 설정
+
+# --------------------------------------------------------------------------
+# 환경별 프로파일 설정
+# --------------------------------------------------------------------------
+--- # 공통 환경
+spring:
+  config:
+    activate:
+      on-profile:
+        - common
+  main:
+    banner-mode: OFF
+  thymeleaf:
+    prefix: file:src/main/resources/templates/
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+    cache: false
+  web:
+    resources:
+      static-locations:
+        - file:src/main/resources/static/
+      cache:
+        period: 36000
+
+mybatis:
+  type-aliases-package: org.subin.orbit.domain.**.dto
+  type-handlers-package: org.subin.orbit.global.common.mybatis
+  config-location: classpath:mybatis/mybatis-config.xml
+  mapper-locations:
+    - classpath:mybatis/mappers/*_mapper.xml
+
+server:
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+
+--- # 개발 환경
 spring:
   config:
     activate:
       on-profile:
         - dev
-  # H2(인메모리 데이터베이스) 연결을 위한 정보 설정
+  # 개발을 위한 H2 인메모리 데이터베이스 연결 정보 설정
   datasource:
     url: jdbc:h2:mem:orbit_test;MODE=MySQL;DB_CLOSE_DELAY=-1
     username: sa
     driver-class-name: org.h2.Driver
-  # 데이터베이스 스키마 버전 관리 비활성화
+  # 데이터베이스 스키마 버전 관리 : 비활성화
   flyway:
     enabled: false
-  # 스프링부트 초기 데이터 설정
   sql:
+    # 스프링 부트 초기 데이터 설정
     init:
-      # ALWAYS : 애플리케이션이 실행될 때마다 데이터베이스 SQL스크립트 실행
-      # EMBEDDED : 내장 데이터베이스를 사용할 경우에만 SQL스크립트 실행
-      # NEVER : 데이터베이스 SQL스크립트가 실행되지 않음
+      # ALWAYS : 애플리케이션이 실행될 때마다 SQL스크립트 실행 , EMBEDDED : 내장 데이터베이스 사용시에만 SQL스크립트 실행, NEVER : SQL스크립트 싫행X
       mode: EMBEDDED
       schema-locations:
         - classpath:sql/h2/schema.sql
-      data-locations:
         - classpath:sql/h2/data.sql
   h2:
     console:
@@ -45,76 +79,8 @@ spring:
 logging:
   level:
     root: info
-    web: debug
 
 server:
-  # 내장 톰캣 서버의 포트번호 변경
   port: 80
 
---- # 로컬 환경 설정
-spring:
-  config:
-    activate:
-      on-profile:
-        - local
-  # 마리아 DB(로컬 데이터베이스) 연결을 위한 정보 설정
-  datasource:
-    url: jdbc:mariadb://localhost:3306/orbit?characterEncoding=UTF-8&serverTimezone=Asia/Seoul
-    username: suihin92
-    password: tq3599
-    driver-class-name: org.mariadb.jdbc.Driver
 
-logging:
-  level:
-    root: info
-    web: info
-
-server:
-  port: 8082
-
---- # 공통 환경 설정
-spring:
-  config:
-    activate:
-      on-profile:
-        - common
-  main:
-    banner-mode: OFF # 서버 런타임시 콘솔상에 출력되는 배너 끄기
-  # 웹 브라우저의 새로고침을 통해 화면단의 변경 이력 적용을 위한 템플릿 파일의 경로 변경
-  thymeleaf:
-    prefix: file:src/main/resources/templates/
-    suffix: .html
-    mode: HTML
-    encoding: UTF-8
-    cache: false  # 개발 중엔 캐시값을 비활성화하여 변경 이력을 즉시 반영할 수 있도록 설정
-  # 웹 브라우저의 새로고침을 통해 화면단의 변경 이력 적용을 위한 정적 리소스 파일의 경로 변경
-  web:
-    resources:
-      static-locations:
-        - file:src/main/resources/static/
-      cache:
-        period: 36000  # 캐시 기간을 36000초(10시간)으로 변경
-
-mybatis:
-  # 런타임시 마이바티스의 동작 제어를 위한 설정값 세팅
-  configuration:
-    # 불필요한 정보의 로드를 사전에 방지하기 위한 지연로딩 설정 활성화
-    lazy-loading-enabled: true
-    # 매퍼 네임스페이스 단위로 동작되는 second-level의 캐시를 비활성화
-    cache-enabled: false
-    # 로컬 캐시 적용 범위 변경
-    local-cache-scope: STATEMENT
-    # 언더스코어 표기법의 컬럼명을 카멜케이스표기법의 필드명으로 매핑 처리
-    map-underscore-to-camel-case: true
-    # 파라미터로 전달된 NULL값에 대하여 DBMS의 타입을 NULL로 처리
-    jdbc-type-for-null: NULL
-    # 컬럼 값이 'NULL'일 경우 해당 값의 누락 방지를 위한 setter 메소드 또는 put 메소드 호출 허용
-    call-setters-on-nulls: true
-  # 매핑 처리되는 자바 클래스의 패키지 경로 지정
-  type-aliases-package: org.subin.orbit.domain.**.dto
-  # 커스터마이징한 타입 핸들러의 패키지 경로 지정
-  type-handlers-package: org.subin.orbit.global.common.mybatis
-  # 매퍼 XML 파일 경로 지정
-  mapper-locations:
-    - classpath:mappers/*_mapper.xml
-    - classpath:mappers/**/*_mapper.xml
